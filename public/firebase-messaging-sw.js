@@ -61,7 +61,7 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   // Get the URL to open from notification data
-  const urlToOpen = event.notification.data?.url || 'https://pwa-testingssss.vercel.app/';
+  const urlToOpen = event.notification.data?.click_action || event.notification.data?.url || 'https://pwa-testingssss.vercel.app/';
   console.log('[firebase-messaging-sw.js] Opening URL:', urlToOpen);
 
   if (event.action === 'open' || event.action === undefined) {
@@ -131,10 +131,11 @@ self.addEventListener('push', (event) => {
         badge: '/icon-72x72.svg',
         tag: 'pwa-notification',
         requireInteraction: true,
-        data: {
-          url: payload.data?.url || 'https://pwa-testingssss.vercel.app/',
-          ...payload.data
-        }
+                  data: {
+            click_action: payload.data?.click_action || payload.data?.url || 'https://pwa-testingssss.vercel.app/',
+            url: payload.data?.url || 'https://pwa-testingssss.vercel.app/',
+            ...payload.data
+          }
       };
 
       event.waitUntil(
