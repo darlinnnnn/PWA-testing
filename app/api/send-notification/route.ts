@@ -64,9 +64,11 @@ export async function POST(request: NextRequest) {
 
     const message = {
       token,
+      content_available: true,
       notification: {
         title: title || '🎉 Real Push Notification!',
         body: body || 'This is a REAL Firebase push notification from your PWA!',
+        click_action: 'https://pwa-testingssss.vercel.app/',
       },
       data: {
         url: 'https://pwa-testingssss.vercel.app/',
@@ -79,19 +81,8 @@ export async function POST(request: NextRequest) {
           icon: '/icon-192x192.svg',
           badge: '/icon-72x72.svg',
           tag: 'pwa-notification',
-          requireInteraction: true,
-          actions: [
-            {
-              action: 'open',
-              title: 'Open App',
-              icon: '/icon-72x72.svg'
-            },
-            {
-              action: 'close',
-              title: 'Close',
-              icon: '/icon-72x72.svg'
-            }
-          ],
+          requireInteraction: false,
+          click_action: 'https://pwa-testingssss.vercel.app/',
           data: {
             url: 'https://pwa-testingssss.vercel.app/',
             click_action: 'https://pwa-testingssss.vercel.app/',

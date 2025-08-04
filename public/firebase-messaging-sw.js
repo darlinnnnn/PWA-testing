@@ -82,15 +82,16 @@ self.addEventListener('notificationclick', (event) => {
           }
         }
         
-        // If no existing window/tab, try to open as PWA
+        // If no existing window/tab, open new one
         console.log('[firebase-messaging-sw.js] No existing client found, opening new window/tab');
         
-        // For mobile devices, try to open in the same window/tab
+        // Try to open window/tab (works for both browser and PWA)
         return clients.openWindow(urlToOpen).then((windowClient) => {
           console.log('[firebase-messaging-sw.js] Window opened successfully:', windowClient);
           return windowClient;
         }).catch((error) => {
           console.error('[firebase-messaging-sw.js] Error opening window:', error);
+          
           // Fallback: try to navigate existing window
           return clients.matchAll().then((clients) => {
             if (clients.length > 0) {
