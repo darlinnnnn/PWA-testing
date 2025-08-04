@@ -1,117 +1,98 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Plus, Bell, Copy, Check, RefreshCw } from 'lucide-react'
-import { getData, insertData, DataItem, updateDeviceToken } from '@/lib/supabase'
-import { requestNotificationPermission, getFCMToken } from '@/lib/firebase'
+import { useState, useEffect } from 'react';
+import { insertData, getData, updateDeviceToken } from '../lib/supabase';
+import { getFCMToken, requestNotificationPermission } from '../lib/firebase';
+import { Plus, Bell, Smartphone, CheckCircle, AlertCircle } from 'lucide-react';
+
+interface DataItem {
+  id: number;
+  name: string;
+  description: string;
+  created_at: string;
+}
 
 export default function DataTable() {
-  const [data, setData] = useState<DataItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [formData, setFormData] = useState({ name: '', description: '' })
-  const [deviceToken, setDeviceToken] = useState<string>('')
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default')
-  const [copied, setCopied] = useState(false)
-  const [updatingTokens, setUpdatingTokens] = useState(false)
+  const [data, setData] = useState<DataItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState({ name: '', description: '' });
+  const [deviceToken, setDeviceToken] = useState<string>('No token');
+  const [notificationPermission, setNotificationPermission] = useState<string>('default');
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
-    loadData()
-    checkNotificationPermission()
-  }, [])
+    fetchData();
+    setupPWAInstall();
+    setupNotifications();
+  }, []);
 
-  const loadData = async () => {
+  const setupPWAInstall = () => {
+    // Listen for the beforeinstallprompt event
+    window.addEventListener('beforeinstallprompt', (e) => {
+      console.log('PWA Install prompt available');
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallPrompt(true);
+    });
+
+    // Listen for app installed event
+    window.addEventListener('appinstalled', () => {
+      console.log('PWA was installed');
+      setShowInstallPrompt(false);
+      setDeferredPrompt(null);
+    });
+  };
+
+  const installPWA = async () => {
+    if (deferredPrompt) {
+      console.log('Showing install prompt');
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log('Install prompt outcome:', outcome);
+      if (outcome === 'accepted') {
+        setShowInstallPrompt(false);
+        setDeferredPrompt(null);
+      }
+    }
+  };
+
+  const setupNotifications = async () => {
     try {
-      const result = await getData()
-      setData(result || [])
-    } catch (error) {
-      console.error('Error loading data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const checkNotificationPermission = () => {
-    if ('Notification' in window) {
-      const permission = Notification.permission
-      setNotificationPermission(permission)
+      const permissionGranted = await requestNotificationPermission();
+      setNotificationPermission(permissionGranted ? 'granted' : 'denied');
       
-      // If permission is already granted, try to get the token
-      if (permission === 'granted') {
-        getFCMToken().then(token => {
-          if (token) {
-            setDeviceToken(token)
-            console.log('✅ Token generated for existing permission:', token.substring(0, 20) + '...')
-          } else {
-            console.log('❌ Failed to generate token for existing permission')
-          }
-        })
+      if (permissionGranted) {
+        const token = await getFCMToken();
+        if (token) {
+          setDeviceToken(token);
+          console.log('Device token:', token);
+        }
       }
+    } catch (error) {
+      console.error('Error setting up notifications:', error);
     }
-  }
+  };
 
-  const handleRequestPermission = async () => {
-    const granted = await requestNotificationPermission()
-    if (granted) {
-      setNotificationPermission('granted')
-      const token = await getFCMToken()
-      console.log('Generated token:', token)
-      if (token) {
-        setDeviceToken(token)
-      } else {
-        console.error('❌ Failed to generate device token even though permission was granted')
-        alert('Permission granted but failed to generate device token. Please check the browser console for details.')
-      }
-    }
-  }
-
-  const updateExistingTokens = async () => {
-    if (!deviceToken) {
-      alert('Please enable notifications first to get a device token.')
-      return
-    }
-
-    setUpdatingTokens(true)
+  const fetchData = async () => {
     try {
-      // Update all records that don't have a device token
-      const recordsToUpdate = data.filter(item => !item.device_token)
-      
-      for (const record of recordsToUpdate) {
-        await updateDeviceToken(record.id, deviceToken)
-        console.log(`Updated record ${record.id} with token`)
-      }
-      
-      await loadData() // Reload data to show updated tokens
-      alert(`Updated ${recordsToUpdate.length} records with device token`)
+      const result = await getData();
+      setData(result);
     } catch (error) {
-      console.error('Error updating tokens:', error)
-      alert('Error updating tokens. Please try again.')
+      console.error('Error fetching data:', error);
     } finally {
-      setUpdatingTokens(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+    if (!formData.name.trim()) return;
+
     try {
-      console.log('Starting form submission...')
-      const token = await getFCMToken()
-      console.log('Submitting with token:', token ? token.substring(0, 20) + '...' : 'No token')
-      
-      const dataToInsert = {
-        ...formData,
-        device_token: token || undefined
-      }
-      
-      console.log('Data to insert:', dataToInsert)
-      
-      const result = await insertData(dataToInsert)
-      console.log('Insert result:', result)
-      
-      setFormData({ name: '', description: '' })
-      setShowForm(false)
-      await loadData()
+      await insertData({ name: formData.name, description: formData.description, device_token: deviceToken });
+      setFormData({ name: '', description: '' });
+      await fetchData();
       
       // Show success notification using service worker
       if ('serviceWorker' in navigator && 'Notification' in window && Notification.permission === 'granted') {
@@ -127,239 +108,192 @@ export default function DataTable() {
           console.log('Could not show notification via service worker:', error)
         })
       }
-      
-      console.log('Form submission completed successfully')
     } catch (error) {
-      console.error('Error adding data:', error)
-      
-      // Provide more specific error messages
-      let errorMessage = 'Error adding data. Please try again.'
-      
+      console.error('Error adding data:', error);
       if (error instanceof Error) {
-        if (error.message.includes('Failed to insert data')) {
-          errorMessage = `Database error: ${error.message}`
-        } else if (error.message.includes('network')) {
-          errorMessage = 'Network error. Please check your connection.'
+        if (error.message.includes('Database')) {
+          alert('Database error: ' + error.message);
+        } else if (error.message.includes('Network')) {
+          alert('Network error: ' + error.message);
         } else {
-          errorMessage = `Error: ${error.message}`
+          alert('Error adding data: ' + error.message);
         }
+      } else {
+        alert('Error adding data');
       }
-      
-      alert(errorMessage)
     }
-  }
+  };
 
-  const copyDeviceToken = async () => {
-    if (deviceToken) {
-      await navigator.clipboard.writeText(deviceToken)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+  const handleUpdateTokens = async () => {
+    try {
+      const token = await getFCMToken();
+      if (token) {
+        setDeviceToken(token);
+        // Update all records with the new token
+        for (const item of data) {
+          await updateDeviceToken(item.id, token);
+        }
+        alert('Device token updated successfully!');
+      }
+    } catch (error) {
+      console.error('Error updating token:', error);
+      alert('Error updating token');
     }
-  }
+  };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-500"></div>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Data Table</h1>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-          >
-            <Plus size={20} />
-            Add Data
-          </button>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">PWA Notification App</h1>
+          <p className="text-gray-600">Powerful Progressive Web App with Firebase & Supabase</p>
         </div>
 
-        {/* Notification Permission Section */}
-        <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <Bell size={20} className="text-blue-600" />
-            <h2 className="text-lg font-semibold text-blue-900">Push Notifications</h2>
-          </div>
-          
-          {notificationPermission === 'default' && (
-            <div className="flex items-center gap-4">
-              <p className="text-blue-700">Enable push notifications to receive updates when data is added.</p>
-              <button
-                onClick={handleRequestPermission}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Enable Notifications
-              </button>
-            </div>
-          )}
-          
-          {notificationPermission === 'granted' && (
-            <div className="space-y-2">
-              <p className="text-green-700 font-medium">✓ Notifications enabled</p>
-              {deviceToken && (
-                <div className="bg-gray-100 p-3 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 mb-1">Device Token (for API testing):</p>
-                      <p className="text-xs text-gray-600 break-all">{deviceToken}</p>
-                    </div>
-                    <button
-                      onClick={copyDeviceToken}
-                      className="ml-2 p-2 text-gray-600 hover:text-gray-800 transition-colors"
-                      title="Copy token"
-                    >
-                      {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
-                    </button>
-                  </div>
-                </div>
-              )}
-              
-              {/* Update existing records button */}
-              {data.some(item => !item.device_token) && (
-                <div className="mt-3 p-3 bg-yellow-50 rounded-lg">
-                  <p className="text-sm text-yellow-800 mb-2">
-                    Some existing records don't have device tokens. Click below to update them.
-                  </p>
-                  <button
-                    onClick={updateExistingTokens}
-                    disabled={updatingTokens}
-                    className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 text-white px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
-                  >
-                    {updatingTokens ? (
-                      <>
-                        <RefreshCw size={14} className="animate-spin" />
-                        Updating...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw size={14} />
-                        Update Existing Records
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {notificationPermission === 'denied' && (
-            <p className="text-red-700">Notifications are blocked. Please enable them in your browser settings.</p>
-          )}
-        </div>
-
-        {/* Add Data Form */}
-        {showForm && (
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-lg font-semibold mb-4">Add New Data</h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  required
-                />
+        {/* PWA Install Prompt */}
+        {showInstallPrompt && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Smartphone className="h-5 w-5 text-blue-600 mr-2" />
+                <span className="text-blue-800 font-medium">Install PWA App</span>
               </div>
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  rows={3}
-                  required
-                />
-              </div>
-              <div className="flex gap-2">
+              <div className="flex space-x-2">
                 <button
-                  type="submit"
-                  className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
+                  onClick={installPWA}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                 >
-                  Add Data
+                  Install
                 </button>
                 <button
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition-colors"
+                  onClick={() => setShowInstallPrompt(false)}
+                  className="text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
                 >
-                  Cancel
+                  Later
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         )}
 
-        {/* Data Table */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200 rounded-lg">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Created At
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Device Token
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {data.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {item.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {item.name}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {item.description}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(item.created_at).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {item.device_token ? (
-                      <div className="max-w-xs">
-                        <p className="text-xs break-all">{item.device_token}</p>
-                      </div>
-                    ) : (
-                      <span className="text-gray-400">No token</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          
-          {data.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              No data available. Add some data to get started!
+        {/* Status Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {/* Notification Permission */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center mb-2">
+              <Bell className={`h-5 w-5 mr-2 ${notificationPermission === 'granted' ? 'text-green-600' : 'text-yellow-600'}`} />
+              <span className="font-medium text-gray-700">Notifications</span>
             </div>
-          )}
+            <p className={`text-sm ${notificationPermission === 'granted' ? 'text-green-600' : 'text-yellow-600'}`}>
+              {notificationPermission === 'granted' ? 'Enabled' : 'Permission needed'}
+            </p>
+          </div>
+
+          {/* Device Token */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center mb-2">
+              <Smartphone className="h-5 w-5 text-blue-600 mr-2" />
+              <span className="font-medium text-gray-700">Device Token</span>
+            </div>
+            <p className="text-sm text-gray-600 break-all">
+              {deviceToken.length > 50 ? `${deviceToken.substring(0, 50)}...` : deviceToken}
+            </p>
+          </div>
+
+          {/* Update Token Button */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <button
+              onClick={handleUpdateTokens}
+              className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
+            >
+              Update Existing Records
+            </button>
+          </div>
+        </div>
+
+        {/* Form */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Add New Data</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                Name
+              </label>
+              <input
+                type="text"
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Enter name"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
+              <textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Enter description"
+                rows={3}
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-all duration-200 flex items-center justify-center"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Add Data
+            </button>
+          </form>
+        </div>
+
+        {/* Data Table */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-xl font-bold text-gray-800">Data Items</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {data.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.id}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">{item.description}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(item.created_at).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
-  )
+  );
 } 
