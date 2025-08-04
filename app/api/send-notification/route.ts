@@ -57,8 +57,8 @@ export async function POST(request: NextRequest) {
         body: body || 'This is a REAL Firebase push notification from your PWA!',
       },
       data: {
-        url: 'https://pwa-testing-theta.vercel.app/',
-        click_action: 'https://pwa-testing-theta.vercel.app/',
+        url: 'https://pwa-testing-mix2.vercel.app/',
+        click_action: 'https://pwa-testing-mix2.vercel.app/',
         ...data,
       },
       webpush: {
@@ -80,19 +80,19 @@ export async function POST(request: NextRequest) {
             }
           ],
           data: {
-            url: 'https://pwa-testing-theta.vercel.app/',
-            click_action: 'https://pwa-testing-theta.vercel.app/'
+            url: 'https://pwa-testing-mix2.vercel.app/',
+            click_action: 'https://pwa-testing-mix2.vercel.app/'
           }
         },
         fcm_options: {
-          link: 'https://pwa-testing-theta.vercel.app/'
+          link: 'https://pwa-testing-mix2.vercel.app/'
         }
       },
       android: {
         notification: {
           icon: '/icon-192x192.svg',
           color: '#667eea',
-          clickAction: 'https://pwa-testing-theta.vercel.app/'
+          clickAction: 'https://pwa-testing-mix2.vercel.app/'
         }
       },
       apns: {
