@@ -60,7 +60,7 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   // Get the URL to open from notification data
-  const urlToOpen = event.notification.data?.url || 'https://pwa-testing-mix2.vercel.app/';
+  const urlToOpen = event.notification.data?.url || 'https://pwa-testingssss.vercel.app/';
   console.log('[firebase-messaging-sw.js] Opening URL:', urlToOpen);
 
   if (event.action === 'open' || event.action === undefined) {
@@ -80,7 +80,7 @@ self.addEventListener('notificationclick', (event) => {
           console.log('[firebase-messaging-sw.js] Found clients for fallback:', clientList.length);
           
           for (const client of clientList) {
-            if (client.url.includes('pwa-testing-mix2.vercel.app')) {
+            if (client.url.includes('pwa-testingssss.vercel.app')) {
               console.log('[firebase-messaging-sw.js] Found existing client, focusing:', client.url);
               return client.focus();
             }
@@ -115,7 +115,7 @@ self.addEventListener('push', (event) => {
         tag: 'pwa-notification',
         requireInteraction: true,
         data: {
-          url: payload.data?.url || 'https://pwa-testing-mix2.vercel.app/',
+          url: payload.data?.url || 'https://pwa-testingssss.vercel.app/',
           ...payload.data
         }
       };

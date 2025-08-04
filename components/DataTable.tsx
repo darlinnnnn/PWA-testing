@@ -113,11 +113,18 @@ export default function DataTable() {
       setShowForm(false)
       await loadData()
       
-      // Show success notification
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Data Added', {
-          body: `New item "${formData.name}" has been added successfully!`,
-          icon: '/icon-192x192.svg'
+      // Show success notification using service worker
+      if ('serviceWorker' in navigator && 'Notification' in window && Notification.permission === 'granted') {
+        navigator.serviceWorker.ready.then((registration) => {
+          registration.showNotification('Data Added', {
+            body: `New item "${formData.name}" has been added successfully!`,
+            icon: '/icon-192x192.svg',
+            badge: '/icon-192x192.svg',
+            tag: 'data-added',
+            requireInteraction: false
+          })
+        }).catch(error => {
+          console.log('Could not show notification via service worker:', error)
         })
       }
       
