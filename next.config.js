@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  async headers() {
+  headers: async () => {
     return [
       {
         source: '/manifest.json',

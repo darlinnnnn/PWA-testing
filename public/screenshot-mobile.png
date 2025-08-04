@@ -1,0 +1,13 @@
+
+<svg width="390" height="844" viewBox="0 0 390 844" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="screenshotGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="390" height="844" fill="url(#screenshotGrad)"/>
+  <rect x="39" y="84.4" width="312" height="506.4" fill="white" opacity="0.9" rx="8"/>
+  <text x="195" y="422" font-family="Arial, sans-serif" font-size="19.5" font-weight="bold" text-anchor="middle" fill="#667eea">PWA Screenshot</text>
+  <text x="195" y="448" font-family="Arial, sans-serif" font-size="13" text-anchor="middle" fill="#666">Mobile view of the PWA</text>
+</svg>
