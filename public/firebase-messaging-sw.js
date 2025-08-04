@@ -59,23 +59,35 @@ self.addEventListener('notificationclick', (event) => {
   
   event.notification.close();
 
+  // Get the URL to open from notification data
+  const urlToOpen = event.notification.data?.url || '/';
+  console.log('[firebase-messaging-sw.js] Opening URL:', urlToOpen);
+
   if (event.action === 'open' || event.action === undefined) {
-    // Open the app
-    const urlToOpen = event.notification.data?.url || '/';
-    
     event.waitUntil(
-      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // First, try to find an existing window/tab
+      clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true
+      }).then((clientList) => {
+        console.log('[firebase-messaging-sw.js] Found clients:', clientList.length);
+        
         // Check if there's already a window/tab open with the target URL
         for (const client of clientList) {
-          if (client.url.includes(urlToOpen) && 'focus' in client) {
+          console.log('[firebase-messaging-sw.js] Checking client:', client.url);
+          if (client.url.includes(urlToOpen) || client.url.includes('pwa-testing-theta.vercel.app')) {
+            console.log('[firebase-messaging-sw.js] Found existing client, focusing:', client.url);
             return client.focus();
           }
         }
         
-        // If no window/tab is open, open a new one
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen);
-        }
+        // If no existing window/tab, open a new one
+        console.log('[firebase-messaging-sw.js] No existing client found, opening new window');
+        return clients.openWindow(urlToOpen);
+      }).catch((error) => {
+        console.error('[firebase-messaging-sw.js] Error handling notification click:', error);
+        // Fallback: try to open the URL anyway
+        return clients.openWindow(urlToOpen);
       })
     );
   }
