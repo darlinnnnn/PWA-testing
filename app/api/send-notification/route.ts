@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
     console.log('🔥 Sending real notification to:', token);
     console.log('📱 Title:', title || '🎉 Real Push Notification!');
     console.log('📝 Body:', body || 'This is a REAL Firebase push notification from your PWA!');
+    console.log('📊 Data payload:', data);
 
     const message = {
       token,
@@ -110,6 +111,8 @@ export async function POST(request: NextRequest) {
         }
       }
     };
+
+    console.log('📦 Full message payload:', JSON.stringify(message, null, 2));
 
     const response = await messaging.send(message);
     console.log('✅ Notification sent successfully:', response);

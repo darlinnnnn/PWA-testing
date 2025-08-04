@@ -22,6 +22,8 @@ const messaging = firebase.messaging();
 // Handle background messages
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message:', payload);
+  console.log('[firebase-messaging-sw.js] Payload data:', payload.data);
+  console.log('[firebase-messaging-sw.js] Payload notification:', payload.notification);
   
   const notificationTitle = payload.notification?.title || payload.data?.title || 'New Notification';
   
@@ -30,6 +32,8 @@ messaging.onBackgroundMessage((payload) => {
   dataObj.click_action = payload.data?.click_action || 'https://pwa-testingssss.vercel.app/';
   dataObj.url = payload.data?.url || 'https://pwa-testingssss.vercel.app/';
   dataObj.source = payload.data?.source || 'firebase';
+  
+  console.log('[firebase-messaging-sw.js] Created dataObj:', dataObj);
   
   const notificationOptions = {
     body: payload.notification?.body || payload.data?.body || 'You have a new message',
@@ -40,6 +44,8 @@ messaging.onBackgroundMessage((payload) => {
     data: dataObj
   };
 
+  console.log('[firebase-messaging-sw.js] Notification options:', notificationOptions);
+
   // Show the notification
   return self.registration.showNotification(notificationTitle, notificationOptions);
 });
@@ -48,12 +54,16 @@ messaging.onBackgroundMessage((payload) => {
 self.addEventListener('notificationclick', (event) => {
   console.log('[firebase-messaging-sw.js] Notification clicked:', event);
   console.log('[firebase-messaging-sw.js] Notification data:', event.notification.data);
+  console.log('[firebase-messaging-sw.js] Notification title:', event.notification.title);
+  console.log('[firebase-messaging-sw.js] Notification body:', event.notification.body);
   
   event.notification.close();
 
   // Get the URL to open from notification data (like in the image)
   const nUrl = event.notification.data?.click_action || event.notification.data?.url || 'https://pwa-testingssss.vercel.app/';
   console.log('[firebase-messaging-sw.js] Opening URL:', nUrl);
+  console.log('[firebase-messaging-sw.js] click_action value:', event.notification.data?.click_action);
+  console.log('[firebase-messaging-sw.js] url value:', event.notification.data?.url);
 
   if (event.action === 'open' || event.action === undefined) {
     event.waitUntil(
