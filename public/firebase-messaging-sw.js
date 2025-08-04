@@ -56,6 +56,7 @@ messaging.onBackgroundMessage((payload) => {
 // Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
   console.log('[firebase-messaging-sw.js] Notification clicked:', event);
+  console.log('[firebase-messaging-sw.js] Notification data:', event.notification.data);
   
   event.notification.close();
 
@@ -65,31 +66,29 @@ self.addEventListener('notificationclick', (event) => {
 
   if (event.action === 'open' || event.action === undefined) {
     event.waitUntil(
-      // Simple approach: try to open window directly
-      clients.openWindow(urlToOpen).then((windowClient) => {
-        console.log('[firebase-messaging-sw.js] Window opened successfully:', windowClient);
-        return windowClient;
-      }).catch((error) => {
-        console.error('[firebase-messaging-sw.js] Error opening window:', error);
+      // First, try to find existing windows
+      clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true
+      }).then((clientList) => {
+        console.log('[firebase-messaging-sw.js] Found clients:', clientList.length);
         
-        // Fallback: try to find existing window and focus it
-        return clients.matchAll({
-          type: 'window',
-          includeUncontrolled: true
-        }).then((clientList) => {
-          console.log('[firebase-messaging-sw.js] Found clients for fallback:', clientList.length);
-          
-          for (const client of clientList) {
-            if (client.url.includes('pwa-testingssss.vercel.app')) {
-              console.log('[firebase-messaging-sw.js] Found existing client, focusing:', client.url);
-              return client.focus();
-            }
+        // Look for existing window with our domain
+        for (const client of clientList) {
+          console.log('[firebase-messaging-sw.js] Checking client:', client.url);
+          if (client.url.includes('pwa-testingssss.vercel.app')) {
+            console.log('[firebase-messaging-sw.js] Found existing client, focusing:', client.url);
+            return client.focus();
           }
-          
-          // If no existing window, try to open again
-          console.log('[firebase-messaging-sw.js] No existing client found, trying to open again');
-          return clients.openWindow(urlToOpen);
-        });
+        }
+        
+        // If no existing window, open a new one
+        console.log('[firebase-messaging-sw.js] No existing client found, opening new window');
+        return clients.openWindow(urlToOpen);
+      }).catch((error) => {
+        console.error('[firebase-messaging-sw.js] Error in notification click handler:', error);
+        // Fallback: try to open window directly
+        return clients.openWindow(urlToOpen);
       })
     );
   }

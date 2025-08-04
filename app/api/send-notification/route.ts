@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
       data: {
         url: 'https://pwa-testingssss.vercel.app/',
         click_action: 'https://pwa-testingssss.vercel.app/',
+        source: data?.source || 'api',
         ...data,
       },
       webpush: {
@@ -93,7 +94,8 @@ export async function POST(request: NextRequest) {
           ],
           data: {
             url: 'https://pwa-testingssss.vercel.app/',
-            click_action: 'https://pwa-testingssss.vercel.app/'
+            click_action: 'https://pwa-testingssss.vercel.app/',
+            source: data?.source || 'api'
           }
         },
         fcm_options: {
