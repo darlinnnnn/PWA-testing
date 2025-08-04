@@ -68,11 +68,11 @@ export async function POST(request: NextRequest) {
       token,
       notification: {
         title: title || '🎉 Real Push Notification!',
-        body: body || 'This is a REAL Firebase push notification from your PWA!',
-        click_action: 'https://pwa-testingssss.vercel.app/'
+        body: body || 'This is a REAL Firebase push notification from your PWA!'
       },
       data: {
         url: 'https://pwa-testingssss.vercel.app/',
+        click_action: 'https://pwa-testingssss.vercel.app/',
         source: data?.source || 'api',
         ...data,
       }
