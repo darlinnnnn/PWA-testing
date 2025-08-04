@@ -10,6 +10,7 @@
   "scope": "/",
   "categories": ["productivity", "utilities"],
   "lang": "en",
+  "prefer_related_applications": false,
   "lang": "en",
   "categories": ["productivity", "utilities"],
   "icons": [

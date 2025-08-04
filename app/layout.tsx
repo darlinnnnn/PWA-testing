@@ -87,30 +87,36 @@ export default function RootLayout({
             __html: `
               // Handle PWA install prompt
               window.addEventListener('beforeinstallprompt', (e) => {
-                console.log('PWA Install prompt available');
+                console.log('🎉 PWA Install prompt available!');
+                console.log('Event details:', e);
+                
                 // Don't prevent default - let Chrome show native prompt
                 // e.preventDefault();
+                
                 // Store the event for later use if needed
                 window.deferredPrompt = e;
                 
-                // Trigger Chrome native prompt after a short delay
-                setTimeout(() => {
-                  if (window.deferredPrompt) {
-                    console.log('Triggering Chrome native install prompt');
-                    window.deferredPrompt.prompt();
-                    window.deferredPrompt.userChoice.then((choiceResult) => {
-                      console.log('User choice:', choiceResult.outcome);
-                      window.deferredPrompt = null;
-                    });
-                  }
-                }, 2000);
+                // Trigger Chrome native prompt immediately
+                console.log('🚀 Triggering Chrome native install prompt...');
+                window.deferredPrompt.prompt();
+                window.deferredPrompt.userChoice.then((choiceResult) => {
+                  console.log('✅ User choice:', choiceResult.outcome);
+                  window.deferredPrompt = null;
+                }).catch((error) => {
+                  console.error('❌ Error showing prompt:', error);
+                });
               });
 
               // Handle PWA installed
               window.addEventListener('appinstalled', () => {
-                console.log('PWA was installed');
+                console.log('🎊 PWA was installed successfully!');
                 window.deferredPrompt = null;
               });
+
+              // Debug: Check if PWA is installable
+              console.log('🔍 Checking PWA installability...');
+              console.log('Manifest:', document.querySelector('link[rel="manifest"]')?.href);
+              console.log('Service Worker:', 'serviceWorker' in navigator);
             `
           }}
         />
