@@ -65,29 +65,31 @@ self.addEventListener('notificationclick', (event) => {
 
   if (event.action === 'open' || event.action === undefined) {
     event.waitUntil(
-      // First, try to find an existing window/tab
-      clients.matchAll({
-        type: 'window',
-        includeUncontrolled: true
-      }).then((clientList) => {
-        console.log('[firebase-messaging-sw.js] Found clients:', clientList.length);
-        
-        // Check if there's already a window/tab open with the target URL
-        for (const client of clientList) {
-          console.log('[firebase-messaging-sw.js] Checking client:', client.url);
-          if (client.url.includes('pwa-testing-mix2.vercel.app') || client.url.includes(urlToOpen)) {
-            console.log('[firebase-messaging-sw.js] Found existing client, focusing:', client.url);
-            return client.focus();
-          }
-        }
-        
-        // If no existing window/tab, open a new one
-        console.log('[firebase-messaging-sw.js] No existing client found, opening new window');
-        return clients.openWindow(urlToOpen);
+      // Simple approach: try to open window directly
+      clients.openWindow(urlToOpen).then((windowClient) => {
+        console.log('[firebase-messaging-sw.js] Window opened successfully:', windowClient);
+        return windowClient;
       }).catch((error) => {
-        console.error('[firebase-messaging-sw.js] Error handling notification click:', error);
-        // Fallback: try to open the URL anyway
-        return clients.openWindow(urlToOpen);
+        console.error('[firebase-messaging-sw.js] Error opening window:', error);
+        
+        // Fallback: try to find existing window and focus it
+        return clients.matchAll({
+          type: 'window',
+          includeUncontrolled: true
+        }).then((clientList) => {
+          console.log('[firebase-messaging-sw.js] Found clients for fallback:', clientList.length);
+          
+          for (const client of clientList) {
+            if (client.url.includes('pwa-testing-mix2.vercel.app')) {
+              console.log('[firebase-messaging-sw.js] Found existing client, focusing:', client.url);
+              return client.focus();
+            }
+          }
+          
+          // If no existing window, try to open again
+          console.log('[firebase-messaging-sw.js] No existing client found, trying to open again');
+          return clients.openWindow(urlToOpen);
+        });
       })
     );
   }
