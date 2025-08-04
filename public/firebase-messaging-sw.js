@@ -45,7 +45,17 @@ messaging.onBackgroundMessage((payload) => {
     badge: '/icon-72x72.svg',
     tag: 'pwa-notification',
     requireInteraction: false,
-    data: dataObj
+    data: dataObj,
+    actions: [
+      {
+        action: 'open',
+        title: 'Open App'
+      },
+      {
+        action: 'close',
+        title: 'Close'
+      }
+    ]
   };
 
   console.log('[firebase-messaging-sw.js] Notification options:', notificationOptions);
@@ -55,44 +65,19 @@ messaging.onBackgroundMessage((payload) => {
 });
 
 // Handle notification clicks
-self.addEventListener('notificationclick', (event) => {
-  console.log('[firebase-messaging-sw.js] Notification clicked:', event);
-  console.log('[firebase-messaging-sw.js] Notification data:', event.notification.data);
-  console.log('[firebase-messaging-sw.js] Notification title:', event.notification.title);
-  console.log('[firebase-messaging-sw.js] Notification body:', event.notification.body);
-  
+self.addEventListener('notificationclick', function(event) {
   event.notification.close();
 
-  // Get the URL to open from notification data (like in the image)
-  const nUrl = event.notification.data?.click_action || event.notification.data?.url || 'https://pwa-testingssss.vercel.app/';
-  console.log('[firebase-messaging-sw.js] Opening URL:', nUrl);
-  console.log('[firebase-messaging-sw.js] click_action value:', event.notification.data?.click_action);
-  console.log('[firebase-messaging-sw.js] url value:', event.notification.data?.url);
-
-  // Always try to open/focus the app
   event.waitUntil(
-    clients.matchAll({ 
-      type: 'window', 
-      includeUncontrolled: true 
-    }).then((clientList) => {
-      console.log('[firebase-messaging-sw.js] Found clients:', clientList.length);
-      
-      // First, try to find and focus an existing PWA window
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
       for (const client of clientList) {
-        console.log('[firebase-messaging-sw.js] Checking client:', client.url);
-        if (client.url.includes('pwa-testingssss.vercel.app')) {
-          console.log('[firebase-messaging-sw.js] Found existing PWA client, focusing:', client.url);
+        // Kalau app-nya sudah terbuka, fokuskan
+        if (client.url === 'https://pwa-testingssss.vercel.app/' && 'focus' in client)
           return client.focus();
-        }
       }
-      
-      // If no PWA window found, try to open a new one
-      console.log('[firebase-messaging-sw.js] No existing PWA client found, opening new window');
-      return clients.openWindow(nUrl).catch((error) => {
-        console.log('[firebase-messaging-sw.js] Failed to open window:', error);
-        // Fallback: try to open in new tab
-        return clients.openWindow(nUrl);
-      });
+      // Kalau belum terbuka, buka tab baru
+      if (clients.openWindow)
+        return clients.openWindow('https://pwa-testingssss.vercel.app/');
     })
   );
 });
