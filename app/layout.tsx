@@ -85,26 +85,51 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              // Register service worker for PWA installability
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/firebase-messaging-sw.js')
+                    .then(function(registration) {
+                      console.log('✅ Service Worker registered successfully:', registration);
+                    })
+                    .catch(function(error) {
+                      console.error('❌ Service Worker registration failed:', error);
+                    });
+                });
+              }
+
               // Handle PWA install prompt
               window.addEventListener('beforeinstallprompt', (e) => {
                 console.log('🎉 PWA Install prompt available!');
                 console.log('Event details:', e);
                 
-                // Don't prevent default - let Chrome show native prompt
-                // e.preventDefault();
+                // Prevent default to handle manually
+                e.preventDefault();
                 
-                // Store the event for later use if needed
+                // Store the event for later use
                 window.deferredPrompt = e;
                 
-                // Trigger Chrome native prompt immediately
-                console.log('🚀 Triggering Chrome native install prompt...');
-                window.deferredPrompt.prompt();
-                window.deferredPrompt.userChoice.then((choiceResult) => {
-                  console.log('✅ User choice:', choiceResult.outcome);
-                  window.deferredPrompt = null;
-                }).catch((error) => {
-                  console.error('❌ Error showing prompt:', error);
-                });
+                // Show install button or trigger on user interaction
+                console.log('📱 PWA install prompt stored. Waiting for user gesture...');
+                
+                // Add install button to page
+                const installButton = document.createElement('button');
+                installButton.textContent = 'Install PWA';
+                installButton.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;';
+                installButton.onclick = () => {
+                  if (window.deferredPrompt) {
+                    console.log('🚀 Triggering Chrome native install prompt...');
+                    window.deferredPrompt.prompt();
+                    window.deferredPrompt.userChoice.then((choiceResult) => {
+                      console.log('✅ User choice:', choiceResult.outcome);
+                      window.deferredPrompt = null;
+                      installButton.remove();
+                    }).catch((error) => {
+                      console.error('❌ Error showing prompt:', error);
+                    });
+                  }
+                };
+                document.body.appendChild(installButton);
               });
 
               // Handle PWA installed
@@ -117,6 +142,30 @@ export default function RootLayout({
               console.log('🔍 Checking PWA installability...');
               console.log('Manifest:', document.querySelector('link[rel="manifest"]')?.href);
               console.log('Service Worker:', 'serviceWorker' in navigator);
+              
+              // Check PWA installability criteria
+              setTimeout(() => {
+                console.log('🔍 PWA Installability Check:');
+                const isHTTPS = window.location.protocol === 'https:';
+                const hasManifest = !!document.querySelector('link[rel="manifest"]');
+                const hasServiceWorker = 'serviceWorker' in navigator;
+                
+                console.log('- HTTPS:', isHTTPS);
+                console.log('- Manifest:', hasManifest);
+                console.log('- Service Worker:', hasServiceWorker);
+                console.log('- Display mode:', 'standalone');
+                console.log('- Start URL:', '/');
+                
+                if (!isHTTPS) {
+                  console.warn('⚠️ PWA requires HTTPS for installability. Use ngrok or deploy to production.');
+                }
+                
+                if (hasManifest && hasServiceWorker && isHTTPS) {
+                  console.log('✅ PWA is installable!');
+                } else {
+                  console.log('❌ PWA is not installable. Check requirements above.');
+                }
+              }, 1000);
             `
           }}
         />
