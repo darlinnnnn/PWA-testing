@@ -93,6 +93,36 @@ self.addEventListener('notificationclick', function(event) {
   );
 });
 
+// Handle navigation to PWA
+self.addEventListener('fetch', function(event) {
+  // Check if this is a navigation request
+  if (event.request.mode === 'navigate') {
+    console.log('[firebase-messaging-sw.js] Navigation request:', event.request.url);
+    
+    // If the request is for our PWA domain, try to open it in the PWA
+    if (event.request.url.includes('pwa-testingssss.vercel.app')) {
+      event.respondWith(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+          // Check if PWA is already open
+          for (const client of clientList) {
+            if (client.url.includes('pwa-testingssss.vercel.app')) {
+              console.log('[firebase-messaging-sw.js] PWA already open, focusing');
+              client.focus();
+              return new Response('PWA focused', { status: 200 });
+            }
+          }
+          
+          // If PWA is not open, open it
+          console.log('[firebase-messaging-sw.js] Opening PWA');
+          return clients.openWindow('https://pwa-testingssss.vercel.app/').then(function(windowClient) {
+            return new Response('PWA opened', { status: 200 });
+          });
+        })
+      );
+    }
+  }
+});
+
 // Handle notification close
 self.addEventListener('notificationclose', (event) => {
   console.log('[firebase-messaging-sw.js] Notification closed:', event);

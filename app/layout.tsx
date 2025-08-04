@@ -69,6 +69,12 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#667eea" />
         <meta name="msapplication-tap-highlight" content="no" />
         <meta name="theme-color" content="#667eea" />
+        
+        {/* Chrome PWA specific meta tags */}
+        <meta name="chrome-webstore-item" content="" />
+        <meta name="google" content="notranslate" />
+        <meta name="robots" content="noindex,nofollow" />
+        <meta name="referrer" content="strict-origin-when-cross-origin" />
 
         <link rel="apple-touch-icon" href="/icon-192x192.svg" />
         <link rel="icon" type="image/svg+xml" href="/icon-192x192.svg" />
