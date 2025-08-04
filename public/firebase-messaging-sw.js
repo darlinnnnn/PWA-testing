@@ -1,13 +1,9 @@
-// Give the service worker access to Firebase Messaging.
-// Note that you can only use Firebase Messaging here. Other Firebase libraries
-// are not available in the service worker.
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
+// Firebase messaging service worker
+importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
 
-// Initialize the Firebase app in the service worker by passing in
-// your app's Firebase config object.
-// https://firebase.google.com/docs/web/setup#config-object
-firebase.initializeApp({
+// Your Firebase configuration
+const firebaseConfig = {
   apiKey: "AIzaSyCjYsAUwlQjhrF-rWnkmcT_ReGBlu3AQdM",
   authDomain: "pwa-konni.firebaseapp.com",
   projectId: "pwa-konni",
@@ -15,45 +11,108 @@ firebase.initializeApp({
   messagingSenderId: "298807443878",
   appId: "1:298807443878:web:436f61140a9b7a0f080f67",
   measurementId: "G-DSZK9JD1TD"
-});
+};
 
-// Retrieve an instance of Firebase Messaging so that it can handle background
-// messages.
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+
+// Initialize Firebase Cloud Messaging
 const messaging = firebase.messaging();
 
 // Handle background messages
 messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Received background message ', payload);
+  console.log('[firebase-messaging-sw.js] Received background message:', payload);
   
-  const notificationTitle = payload.notification?.title || 'New Notification';
+  const notificationTitle = payload.notification?.title || payload.data?.title || 'New Notification';
   const notificationOptions = {
-    body: payload.notification?.body || 'You have a new message',
-    icon: '/icon-192x192.png',
-    badge: '/icon-192x192.png',
-    data: payload.data
+    body: payload.notification?.body || payload.data?.body || 'You have a new message',
+    icon: '/icon-192x192.svg',
+    badge: '/icon-72x72.svg',
+    tag: 'pwa-notification',
+    requireInteraction: true,
+    actions: [
+      {
+        action: 'open',
+        title: 'Open App',
+        icon: '/icon-72x72.svg'
+      },
+      {
+        action: 'close',
+        title: 'Close',
+        icon: '/icon-72x72.svg'
+      }
+    ],
+    data: {
+      url: payload.data?.url || '/',
+      click_action: payload.data?.click_action || payload.notification?.click_action,
+      ...payload.data
+    }
   };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  // Show the notification
+  return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-// Handle notification click
+// Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
-  console.log('[firebase-messaging-sw.js] Notification click Received.');
+  console.log('[firebase-messaging-sw.js] Notification clicked:', event);
   
   event.notification.close();
 
-  // This looks to see if the current is already open and focuses if it is
-  event.waitUntil(
-    clients.matchAll({
-      type: "window"
-    }).then((clientList) => {
-      for (let i = 0; i < clientList.length; i++) {
-        const client = clientList[i];
-        if (client.url === '/' && 'focus' in client)
-          return client.focus();
-      }
-      if (clients.openWindow)
-        return clients.openWindow('/');
-    })
-  );
-}); 
+  if (event.action === 'open' || event.action === undefined) {
+    // Open the app
+    const urlToOpen = event.notification.data?.url || '/';
+    
+    event.waitUntil(
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+        // Check if there's already a window/tab open with the target URL
+        for (const client of clientList) {
+          if (client.url.includes(urlToOpen) && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        
+        // If no window/tab is open, open a new one
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+    );
+  }
+});
+
+// Handle notification close
+self.addEventListener('notificationclose', (event) => {
+  console.log('[firebase-messaging-sw.js] Notification closed:', event);
+});
+
+// Handle push events (fallback for older browsers)
+self.addEventListener('push', (event) => {
+  console.log('[firebase-messaging-sw.js] Push event received:', event);
+  
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      const notificationTitle = payload.notification?.title || payload.data?.title || 'New Notification';
+      const notificationOptions = {
+        body: payload.notification?.body || payload.data?.body || 'You have a new message',
+        icon: '/icon-192x192.svg',
+        badge: '/icon-72x72.svg',
+        tag: 'pwa-notification',
+        requireInteraction: true,
+        data: {
+          url: payload.data?.url || '/',
+          ...payload.data
+        }
+      };
+
+      event.waitUntil(
+        self.registration.showNotification(notificationTitle, notificationOptions)
+      );
+    } catch (error) {
+      console.error('[firebase-messaging-sw.js] Error parsing push data:', error);
+    }
+  }
+});
+
+console.log('[firebase-messaging-sw.js] Service worker loaded successfully'); 
