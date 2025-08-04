@@ -25,18 +25,22 @@ messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Payload data:', payload.data);
   console.log('[firebase-messaging-sw.js] Payload notification:', payload.notification);
   
+  // Try to get title and body from different sources
   const notificationTitle = payload.notification?.title || payload.data?.title || 'New Notification';
+  const notificationBody = payload.notification?.body || payload.data?.body || 'You have a new message';
   
-  // Create data object with custom properties (like in the image)
+  // Create data object with custom properties
   const dataObj = payload.data || {};
   dataObj.click_action = payload.data?.click_action || 'https://pwa-testingssss.vercel.app/';
   dataObj.url = payload.data?.url || 'https://pwa-testingssss.vercel.app/';
   dataObj.source = payload.data?.source || 'firebase';
   
   console.log('[firebase-messaging-sw.js] Created dataObj:', dataObj);
+  console.log('[firebase-messaging-sw.js] Notification title:', notificationTitle);
+  console.log('[firebase-messaging-sw.js] Notification body:', notificationBody);
   
   const notificationOptions = {
-    body: payload.notification?.body || payload.data?.body || 'You have a new message',
+    body: notificationBody,
     icon: '/icon-192x192.svg',
     badge: '/icon-72x72.svg',
     tag: 'pwa-notification',
