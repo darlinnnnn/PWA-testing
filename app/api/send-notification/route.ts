@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     console.log('📝 Body:', body || 'This is a REAL Firebase push notification from your PWA!');
     console.log('📊 Data payload:', data);
 
-    // Use the format you specified
+    // Use simple Firebase format
     const message = {
       token,
       notification: {
@@ -72,7 +72,6 @@ export async function POST(request: NextRequest) {
       },
       data: {
         url: 'https://pwa-testingssss.vercel.app/',
-        click_action: 'https://pwa-testingssss.vercel.app/',
         source: data?.source || 'api',
         ...data,
       }
