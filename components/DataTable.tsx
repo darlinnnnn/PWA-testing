@@ -18,44 +18,10 @@ export default function DataTable() {
   const [formData, setFormData] = useState({ name: '', description: '' });
   const [deviceToken, setDeviceToken] = useState<string>('No token');
   const [notificationPermission, setNotificationPermission] = useState<string>('default');
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-
   useEffect(() => {
     fetchData();
-    setupPWAInstall();
     setupNotifications();
   }, []);
-
-  const setupPWAInstall = () => {
-    // Listen for the beforeinstallprompt event
-    window.addEventListener('beforeinstallprompt', (e) => {
-      console.log('PWA Install prompt available');
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallPrompt(true);
-    });
-
-    // Listen for app installed event
-    window.addEventListener('appinstalled', () => {
-      console.log('PWA was installed');
-      setShowInstallPrompt(false);
-      setDeferredPrompt(null);
-    });
-  };
-
-  const installPWA = async () => {
-    if (deferredPrompt) {
-      console.log('Showing install prompt');
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log('Install prompt outcome:', outcome);
-      if (outcome === 'accepted') {
-        setShowInstallPrompt(false);
-        setDeferredPrompt(null);
-      }
-    }
-  };
 
   const setupNotifications = async () => {
     try {
@@ -161,31 +127,7 @@ export default function DataTable() {
           <p className="text-gray-600">Powerful Progressive Web App with Firebase & Supabase</p>
         </div>
 
-        {/* PWA Install Prompt */}
-        {showInstallPrompt && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Smartphone className="h-5 w-5 text-blue-600 mr-2" />
-                <span className="text-blue-800 font-medium">Install PWA App</span>
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={installPWA}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                >
-                  Install
-                </button>
-                <button
-                  onClick={() => setShowInstallPrompt(false)}
-                  className="text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
-                >
-                  Later
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {/* Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">

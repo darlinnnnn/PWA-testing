@@ -70,14 +70,25 @@ self.addEventListener('notificationclick', function(event) {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+      console.log('[firebase-messaging-sw.js] Found clients:', clientList.length);
+      
+      // First, try to find and focus an existing PWA window
       for (const client of clientList) {
-        // Kalau app-nya sudah terbuka, fokuskan
-        if (client.url === 'https://pwa-testingssss.vercel.app/' && 'focus' in client)
+        console.log('[firebase-messaging-sw.js] Checking client:', client.url);
+        // Check for both exact URL and PWA scope
+        if ((client.url === 'https://pwa-testingssss.vercel.app/' || 
+             client.url.startsWith('https://pwa-testingssss.vercel.app/')) && 
+            'focus' in client) {
+          console.log('[firebase-messaging-sw.js] Found existing PWA client, focusing:', client.url);
           return client.focus();
+        }
       }
-      // Kalau belum terbuka, buka tab baru
-      if (clients.openWindow)
+      
+      // If no PWA window found, try to open a new one
+      console.log('[firebase-messaging-sw.js] No existing PWA client found, opening new window');
+      if (clients.openWindow) {
         return clients.openWindow('https://pwa-testingssss.vercel.app/');
+      }
     })
   );
 });

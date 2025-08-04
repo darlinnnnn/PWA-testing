@@ -74,6 +74,28 @@ export default function RootLayout({
         <link rel="icon" type="image/svg+xml" href="/icon-192x192.svg" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="shortcut icon" href="/icon-192x192.svg" />
+        
+        {/* PWA Install Handler */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Handle PWA install prompt
+              window.addEventListener('beforeinstallprompt', (e) => {
+                console.log('PWA Install prompt available');
+                // Let Chrome handle the native prompt
+                e.preventDefault();
+                // Store the event for later use if needed
+                window.deferredPrompt = e;
+              });
+
+              // Handle PWA installed
+              window.addEventListener('appinstalled', () => {
+                console.log('PWA was installed');
+                window.deferredPrompt = null;
+              });
+            `
+          }}
+        />
       </head>
       <body className={inter.className}>{children}</body>
     </html>
