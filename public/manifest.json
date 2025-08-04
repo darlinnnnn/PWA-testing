@@ -8,10 +8,8 @@
   "theme_color": "#667eea",
   "orientation": "portrait-primary",
   "scope": "/",
-  "urls": [
-    "https://pwa-testingssss.vercel.app/",
-    "https://pwa-testingssss.vercel.app/*"
-  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "en",
   "lang": "en",
   "categories": ["productivity", "utilities"],
   "icons": [

@@ -88,10 +88,22 @@ export default function RootLayout({
               // Handle PWA install prompt
               window.addEventListener('beforeinstallprompt', (e) => {
                 console.log('PWA Install prompt available');
-                // Let Chrome handle the native prompt
-                e.preventDefault();
+                // Don't prevent default - let Chrome show native prompt
+                // e.preventDefault();
                 // Store the event for later use if needed
                 window.deferredPrompt = e;
+                
+                // Trigger Chrome native prompt after a short delay
+                setTimeout(() => {
+                  if (window.deferredPrompt) {
+                    console.log('Triggering Chrome native install prompt');
+                    window.deferredPrompt.prompt();
+                    window.deferredPrompt.userChoice.then((choiceResult) => {
+                      console.log('User choice:', choiceResult.outcome);
+                      window.deferredPrompt = null;
+                    });
+                  }
+                }, 2000);
               });
 
               // Handle PWA installed

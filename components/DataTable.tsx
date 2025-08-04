@@ -130,7 +130,7 @@ export default function DataTable() {
 
 
         {/* Status Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           {/* Notification Permission */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center mb-2">
@@ -151,16 +151,6 @@ export default function DataTable() {
             <p className="text-sm text-gray-600 break-all">
               {deviceToken.length > 50 ? `${deviceToken.substring(0, 50)}...` : deviceToken}
             </p>
-          </div>
-
-          {/* Update Token Button */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <button
-              onClick={handleUpdateTokens}
-              className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
-            >
-              Update Existing Records
-            </button>
           </div>
         </div>
 
