@@ -95,13 +95,19 @@ export default function DataTable() {
     e.preventDefault()
     
     try {
+      console.log('Starting form submission...')
       const token = await getFCMToken()
-      console.log('Submitting with token:', token)
+      console.log('Submitting with token:', token ? token.substring(0, 20) + '...' : 'No token')
       
-      await insertData({
+      const dataToInsert = {
         ...formData,
         device_token: token || undefined
-      })
+      }
+      
+      console.log('Data to insert:', dataToInsert)
+      
+      const result = await insertData(dataToInsert)
+      console.log('Insert result:', result)
       
       setFormData({ name: '', description: '' })
       setShowForm(false)
@@ -111,12 +117,28 @@ export default function DataTable() {
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification('Data Added', {
           body: `New item "${formData.name}" has been added successfully!`,
-          icon: '/icon-192x192.png'
+          icon: '/icon-192x192.svg'
         })
       }
+      
+      console.log('Form submission completed successfully')
     } catch (error) {
       console.error('Error adding data:', error)
-      alert('Error adding data. Please try again.')
+      
+      // Provide more specific error messages
+      let errorMessage = 'Error adding data. Please try again.'
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to insert data')) {
+          errorMessage = `Database error: ${error.message}`
+        } else if (error.message.includes('network')) {
+          errorMessage = 'Network error. Please check your connection.'
+        } else {
+          errorMessage = `Error: ${error.message}`
+        }
+      }
+      
+      alert(errorMessage)
     }
   }
 
