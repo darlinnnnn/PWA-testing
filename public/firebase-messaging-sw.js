@@ -24,29 +24,20 @@ messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message:', payload);
   
   const notificationTitle = payload.notification?.title || payload.data?.title || 'New Notification';
+  
+  // Create data object with custom properties (like in the image)
+  const dataObj = payload.data || {};
+  dataObj.click_action = payload.data?.click_action || 'https://pwa-testingssss.vercel.app/';
+  dataObj.url = payload.data?.url || 'https://pwa-testingssss.vercel.app/';
+  dataObj.source = payload.data?.source || 'firebase';
+  
   const notificationOptions = {
     body: payload.notification?.body || payload.data?.body || 'You have a new message',
     icon: '/icon-192x192.svg',
     badge: '/icon-72x72.svg',
     tag: 'pwa-notification',
-    requireInteraction: true,
-    actions: [
-      {
-        action: 'open',
-        title: 'Open App',
-        icon: '/icon-72x72.svg'
-      },
-      {
-        action: 'close',
-        title: 'Close',
-        icon: '/icon-72x72.svg'
-      }
-    ],
-    data: {
-      url: payload.data?.url || 'https://pwa-testing-mix2.vercel.app/',
-      click_action: payload.data?.click_action || payload.notification?.click_action,
-      ...payload.data
-    }
+    requireInteraction: false,
+    data: dataObj
   };
 
   // Show the notification
@@ -60,9 +51,9 @@ self.addEventListener('notificationclick', (event) => {
   
   event.notification.close();
 
-  // Get the URL to open from notification data
-  const urlToOpen = event.notification.data?.click_action || event.notification.data?.url || 'https://pwa-testingssss.vercel.app/';
-  console.log('[firebase-messaging-sw.js] Opening URL:', urlToOpen);
+  // Get the URL to open from notification data (like in the image)
+  const nUrl = event.notification.data?.click_action || event.notification.data?.url || 'https://pwa-testingssss.vercel.app/';
+  console.log('[firebase-messaging-sw.js] Opening URL:', nUrl);
 
   if (event.action === 'open' || event.action === undefined) {
     event.waitUntil(
@@ -86,7 +77,7 @@ self.addEventListener('notificationclick', (event) => {
         console.log('[firebase-messaging-sw.js] No existing client found, opening new window/tab');
         
         // Try to open window/tab (works for both browser and PWA)
-        return clients.openWindow(urlToOpen).then((windowClient) => {
+        return clients.openWindow(nUrl).then((windowClient) => {
           console.log('[firebase-messaging-sw.js] Window opened successfully:', windowClient);
           return windowClient;
         }).catch((error) => {
@@ -96,17 +87,17 @@ self.addEventListener('notificationclick', (event) => {
           return clients.matchAll().then((clients) => {
             if (clients.length > 0) {
               console.log('[firebase-messaging-sw.js] Navigating existing client');
-              return clients[0].navigate(urlToOpen);
+              return clients[0].navigate(nUrl);
             } else {
               console.log('[firebase-messaging-sw.js] No clients available, opening new window');
-              return clients.openWindow(urlToOpen);
+              return clients.openWindow(nUrl);
             }
           });
         });
       }).catch((error) => {
         console.error('[firebase-messaging-sw.js] Error in notification click handler:', error);
         // Fallback: try to open window directly
-        return clients.openWindow(urlToOpen);
+        return clients.openWindow(nUrl);
       })
     );
   }
