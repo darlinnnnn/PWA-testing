@@ -73,26 +73,9 @@ export async function POST(request: NextRequest) {
         source: data?.source || 'api',
         ...data,
       },
-      webpush: {
-        headers: {
-          Urgency: 'high'
-        },
-        notification: {
-          title: title || '🎉 Real Push Notification!',
-          body: body || 'This is a REAL Firebase push notification from your PWA!',
-          icon: '/icon-192x192.svg',
-          badge: '/icon-72x72.svg',
-          tag: 'pwa-notification',
-          renotify: true,
-          data: {
-            click_action: 'https://pwa-testingssss.vercel.app/',
-            url: 'https://pwa-testingssss.vercel.app/',
-            source: data?.source || 'api'
-          }
-        },
-        fcm_options: {
-          link: 'https://pwa-testingssss.vercel.app/'
-        }
+      notification: {
+        title: title || '🎉 Real Push Notification!',
+        body: body || 'This is a REAL Firebase push notification from your PWA!',
       },
       android: {
         notification: {
