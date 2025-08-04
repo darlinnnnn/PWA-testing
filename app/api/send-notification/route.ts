@@ -6,24 +6,36 @@ import { getMessaging } from 'firebase-admin/messaging';
 let firebaseApp: App | undefined;
 if (!getApps().length) {
   try {
+    console.log('🔧 Initializing Firebase Admin SDK...');
+    console.log('🔍 FIREBASE_SERVICE_ACCOUNT_BASE64 exists:', !!process.env.FIREBASE_SERVICE_ACCOUNT_BASE64);
+    console.log('🔍 FIREBASE_SERVICE_ACCOUNT_BASE64 length:', process.env.FIREBASE_SERVICE_ACCOUNT_BASE64?.length || 0);
+    
     // Try to load service account from environment variable (production)
     if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
+      console.log('🔧 Loading service account from environment variable...');
       const serviceAccount = JSON.parse(
         Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, 'base64').toString()
       );
+      console.log('🔧 Service account loaded successfully, project_id:', serviceAccount.project_id);
       firebaseApp = initializeApp({
         credential: cert(serviceAccount),
       });
+      console.log('✅ Firebase Admin SDK initialized successfully');
     } else {
+      console.log('🔧 Loading service account from local file...');
       // Try to load from local file (development)
       const serviceAccount = require('../../../firebase-service-account.json');
       firebaseApp = initializeApp({
         credential: cert(serviceAccount),
       });
+      console.log('✅ Firebase Admin SDK initialized successfully (local)');
     }
   } catch (error) {
     console.error('❌ Firebase Admin initialization failed:', error);
+    console.error('❌ Error details:', error instanceof Error ? error.message : 'Unknown error');
   }
+} else {
+  console.log('✅ Firebase Admin SDK already initialized');
 }
 
 const messaging = firebaseApp ? getMessaging(firebaseApp) : undefined;
