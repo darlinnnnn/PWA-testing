@@ -99,6 +99,8 @@ export default function RootLayout({
               }
 
               // Handle PWA install prompt
+              console.log('🔍 Setting up PWA install listener...');
+              
               window.addEventListener('beforeinstallprompt', (e) => {
                 console.log('🎉 PWA Install prompt available!');
                 console.log('Event details:', e);
@@ -186,8 +188,41 @@ export default function RootLayout({
               // Fallback: Check if PWA is already installed
               if (window.matchMedia('(display-mode: standalone)').matches) {
                 console.log('📱 PWA is already installed and running in standalone mode');
+                console.log('💡 No install button needed - PWA already installed!');
               } else {
                 console.log('🌐 App is running in browser mode - PWA install prompt will show if available');
+                console.log('⏳ Waiting for beforeinstallprompt event...');
+                
+                // Add a fallback button if beforeinstallprompt doesn't fire
+                setTimeout(() => {
+                  if (!window.deferredPrompt) {
+                    console.log('⚠️ beforeinstallprompt event not fired. Creating fallback install button...');
+                    
+                    const fallbackButton = document.createElement('button');
+                    fallbackButton.textContent = '📱 Install PWA (Manual)';
+                    fallbackButton.style.cssText = `
+                      position: fixed;
+                      top: 20px;
+                      right: 20px;
+                      z-index: 9999;
+                      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+                      color: white;
+                      border: none;
+                      padding: 12px 24px;
+                      border-radius: 25px;
+                      cursor: pointer;
+                      font-size: 14px;
+                      font-weight: 600;
+                      box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+                    `;
+                    
+                    fallbackButton.onclick = () => {
+                      alert('📱 To install this app:\n\n1. Tap the menu (⋮) in your browser\n2. Select "Add to Home Screen"\n3. Follow the prompts to install');
+                    };
+                    
+                    document.body.appendChild(fallbackButton);
+                  }
+                }, 3000); // Wait 3 seconds for beforeinstallprompt
               }
 
               // Debug: Check if PWA is installable
