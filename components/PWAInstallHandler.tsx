@@ -121,7 +121,7 @@ export default function PWAInstallHandler() {
     
     // Additional check for iOS Safari
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isInStandaloneMode = window.navigator.standalone === true;
+    const isInStandaloneMode = (window.navigator as any).standalone === true;
     
     if (isPWAInstalled || (isIOS && isInStandaloneMode)) {
       console.log('📱 PWA is already installed and running in standalone/fullscreen mode');
@@ -142,7 +142,7 @@ export default function PWAInstallHandler() {
       const isPWAInstalled = isStandalone || isFullscreen || isMinimalUI;
       
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isInStandaloneMode = window.navigator.standalone === true;
+      const isInStandaloneMode = (window.navigator as any).standalone === true;
       
       if (!(window as any).deferredPrompt && !isPWAInstalled && !(isIOS && isInStandaloneMode)) {
         console.log('⚠️ beforeinstallprompt event not fired. Creating fallback install button...');
