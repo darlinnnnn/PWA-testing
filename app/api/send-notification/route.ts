@@ -25,13 +25,20 @@ if (!getApps().length) {
       console.log('🔧 Loading service account from local file...');
       try {
         // Try to load from local file (development)
-        const serviceAccount = require('../../../firebase-service-account.json');
+        const path = require('path');
+        const serviceAccountPath = path.join(process.cwd(), 'firebase-service-account.json');
+        console.log('🔍 Looking for service account at:', serviceAccountPath);
+        
+        const serviceAccount = require(serviceAccountPath);
+        console.log('🔧 Service account loaded from file, project_id:', serviceAccount.project_id);
+        
         firebaseApp = initializeApp({
           credential: cert(serviceAccount),
         });
         console.log('✅ Firebase Admin SDK initialized successfully (local)');
       } catch (fileError) {
         console.log('🔧 No local service account file found');
+        console.log('⚠️ Error details:', fileError instanceof Error ? fileError.message : 'Unknown error');
         console.log('⚠️ Please set FIREBASE_SERVICE_ACCOUNT_BASE64 environment variable for production');
         console.log('⚠️ Or create firebase-service-account.json file in project root');
       }
@@ -45,6 +52,8 @@ if (!getApps().length) {
 }
 
 const messaging = firebaseApp ? getMessaging(firebaseApp) : undefined;
+console.log('🔍 Firebase App initialized:', !!firebaseApp);
+console.log('🔍 Messaging available:', !!messaging);
 
 export async function POST(request: NextRequest) {
   try {
