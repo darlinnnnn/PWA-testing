@@ -1,13 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+// Check if required environment variables are available
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('❌ Missing Supabase environment variables:', {
+    hasUrl: !!supabaseUrl,
+    hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  });
+}
+
+const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Supabase is properly configured
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('❌ Supabase not configured properly');
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 500 }
+      );
+    }
+
     const { device_token, user_agent } = await request.json();
 
     if (!device_token) {
@@ -87,6 +105,15 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    // Check if Supabase is properly configured
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('❌ Supabase not configured properly');
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 500 }
+      );
+    }
+
     const { device_token } = await request.json();
 
     if (!device_token) {
@@ -128,6 +155,15 @@ export async function DELETE(request: NextRequest) {
 
 export async function GET() {
   try {
+    // Check if Supabase is properly configured
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('❌ Supabase not configured properly');
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 500 }
+      );
+    }
+
     // Get all active tokens (for admin purposes)
     const { data, error } = await supabase
       .from('pwa_device_tokens')
