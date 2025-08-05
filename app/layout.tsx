@@ -103,33 +103,24 @@ export default function RootLayout({
                 console.log('🎉 PWA Install prompt available!');
                 console.log('Event details:', e);
                 
-                // Prevent default to handle manually
-                e.preventDefault();
-                
                 // Store the event for later use
                 window.deferredPrompt = e;
                 
-                // Show install button or trigger on user interaction
-                console.log('📱 PWA install prompt stored. Waiting for user gesture...');
+                // Show prompt automatically after a short delay
+                console.log('📱 Showing PWA install prompt automatically...');
                 
-                // Add install button to page
-                const installButton = document.createElement('button');
-                installButton.textContent = 'Install PWA';
-                installButton.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;';
-                installButton.onclick = () => {
+                setTimeout(() => {
                   if (window.deferredPrompt) {
-                    console.log('🚀 Triggering Chrome native install prompt...');
+                    console.log('🚀 Triggering Chrome native install prompt automatically...');
                     window.deferredPrompt.prompt();
                     window.deferredPrompt.userChoice.then((choiceResult) => {
                       console.log('✅ User choice:', choiceResult.outcome);
                       window.deferredPrompt = null;
-                      installButton.remove();
                     }).catch((error) => {
                       console.error('❌ Error showing prompt:', error);
                     });
                   }
-                };
-                document.body.appendChild(installButton);
+                }, 2000); // Show prompt after 2 seconds
               });
 
               // Handle PWA installed
@@ -137,6 +128,13 @@ export default function RootLayout({
                 console.log('🎊 PWA was installed successfully!');
                 window.deferredPrompt = null;
               });
+
+              // Fallback: Check if PWA is already installed
+              if (window.matchMedia('(display-mode: standalone)').matches) {
+                console.log('📱 PWA is already installed and running in standalone mode');
+              } else {
+                console.log('🌐 App is running in browser mode - PWA install prompt will show if available');
+              }
 
               // Debug: Check if PWA is installable
               console.log('🔍 Checking PWA installability...');

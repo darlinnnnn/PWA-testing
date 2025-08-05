@@ -12,8 +12,6 @@
   "lang": "en",
   "prefer_related_applications": false,
   "id": "/",
-  "lang": "en",
-  "categories": ["productivity", "utilities"],
   "icons": [
     {
       "src": "/icon-192x192.svg",
