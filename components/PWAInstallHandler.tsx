@@ -105,35 +105,39 @@ export default function PWAInstallHandler() {
 
     // Handle PWA installed
     const handleAppInstalled = async () => {
-      console.log('🎊 PWA was installed successfully!');
-      (window as any).deferredPrompt = null;
+      console.log('🎉 PWA installed successfully!');
+      console.log('📱 App is now running in standalone/fullscreen mode');
       
-      // Save device token to Supabase when PWA is installed
-      try {
-        const token = await getFCMToken();
-        if (token) {
-          console.log('💾 Saving device token to Supabase after PWA install...');
-          const response = await fetch('/api/pwa-token', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              device_token: token,
-              user_agent: navigator.userAgent
-            })
-          });
-          
-          const result = await response.json();
-          if (result.success) {
-            console.log('✅ Device token saved to Supabase:', result.action);
-          } else {
-            console.error('❌ Failed to save device token:', result.error);
-          }
+      // Remove any install buttons
+      const installButtons = document.querySelectorAll('button[style*="position: fixed"]');
+      installButtons.forEach(button => button.remove());
+      
+      // Show success message
+      const successMessage = document.createElement('div');
+      successMessage.textContent = '✅ PWA Installed Successfully!';
+      successMessage.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-size: 14px;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+      `;
+      
+      document.body.appendChild(successMessage);
+      
+      // Remove success message after 3 seconds
+      setTimeout(() => {
+        if (successMessage.parentNode) {
+          successMessage.remove();
         }
-      } catch (error) {
-        console.error('❌ Error saving device token after PWA install:', error);
-      }
+      }, 3000);
     };
 
     // Add event listeners
