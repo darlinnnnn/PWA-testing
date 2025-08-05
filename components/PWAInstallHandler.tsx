@@ -113,10 +113,20 @@ export default function PWAInstallHandler() {
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
 
-    // Check if PWA is already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      console.log('📱 PWA is already installed and running in standalone mode');
+    // Check if PWA is already installed (multiple detection methods)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
+    const isMinimalUI = window.matchMedia('(display-mode: minimal-ui)').matches;
+    const isPWAInstalled = isStandalone || isFullscreen || isMinimalUI;
+    
+    // Additional check for iOS Safari
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isInStandaloneMode = window.navigator.standalone === true;
+    
+    if (isPWAInstalled || (isIOS && isInStandaloneMode)) {
+      console.log('📱 PWA is already installed and running in standalone/fullscreen mode');
       console.log('💡 No install button needed - PWA already installed!');
+      console.log('🔍 Detection details:', { isStandalone, isFullscreen, isMinimalUI, isIOS, isInStandaloneMode });
       return; // Exit early if PWA is already installed
     }
     
@@ -125,7 +135,16 @@ export default function PWAInstallHandler() {
     
     // Add a fallback button if beforeinstallprompt doesn't fire
     setTimeout(() => {
-      if (!(window as any).deferredPrompt) {
+      // Double-check if PWA is installed before showing fallback button
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+      const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
+      const isMinimalUI = window.matchMedia('(display-mode: minimal-ui)').matches;
+      const isPWAInstalled = isStandalone || isFullscreen || isMinimalUI;
+      
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isInStandaloneMode = window.navigator.standalone === true;
+      
+      if (!(window as any).deferredPrompt && !isPWAInstalled && !(isIOS && isInStandaloneMode)) {
         console.log('⚠️ beforeinstallprompt event not fired. Creating fallback install button...');
         
         const fallbackButton = document.createElement('button');
@@ -151,6 +170,8 @@ export default function PWAInstallHandler() {
         };
         
         document.body.appendChild(fallbackButton);
+      } else {
+        console.log('✅ PWA already installed or install prompt available - no fallback button needed');
       }
     }, 3000); // Wait 3 seconds for beforeinstallprompt
 
