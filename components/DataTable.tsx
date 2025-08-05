@@ -16,8 +16,9 @@ export default function DataTable() {
   const [data, setData] = useState<DataItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({ name: '', description: '' });
-  const [deviceToken, setDeviceToken] = useState<string>('No token');
+  const [deviceToken, setDeviceToken] = useState<string>('');
   const [notificationPermission, setNotificationPermission] = useState<string>('default');
+  const [tokenSaved, setTokenSaved] = useState<boolean>(false);
   useEffect(() => {
     fetchData();
     setupNotifications();
@@ -32,7 +33,31 @@ export default function DataTable() {
         const token = await getFCMToken();
         if (token) {
           setDeviceToken(token);
-          console.log('Device token:', token);
+          console.log('Device token obtained');
+          
+          // Save token to Supabase
+          try {
+            const response = await fetch('/api/pwa-token', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                device_token: token,
+                user_agent: navigator.userAgent
+              })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+              setTokenSaved(true);
+              console.log('✅ Device token saved to Supabase:', result.action);
+            } else {
+              console.error('❌ Failed to save device token:', result.error);
+            }
+          } catch (error) {
+            console.error('❌ Error saving device token:', error);
+          }
         }
       }
     } catch (error) {
@@ -76,7 +101,7 @@ export default function DataTable() {
       }
 
       // Send Firebase push notification
-      if (deviceToken && deviceToken !== 'No token') {
+      if (deviceToken) {
         try {
           console.log('🔥 Sending Firebase push notification to:', deviceToken);
           const response = await fetch('/api/send-notification', {
@@ -176,14 +201,14 @@ export default function DataTable() {
             </p>
           </div>
 
-          {/* Device Token */}
+          {/* Device Token Status */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center mb-2">
-              <Smartphone className="h-5 w-5 text-blue-600 mr-2" />
-              <span className="font-medium text-gray-700">Device Token</span>
+              <Smartphone className={`h-5 w-5 mr-2 ${tokenSaved ? 'text-green-600' : 'text-yellow-600'}`} />
+              <span className="font-medium text-gray-700">Token Status</span>
             </div>
-            <p className="text-sm text-gray-600 break-all">
-              {deviceToken.length > 50 ? `${deviceToken.substring(0, 50)}...` : deviceToken}
+            <p className={`text-sm ${tokenSaved ? 'text-green-600' : 'text-yellow-600'}`}>
+              {tokenSaved ? 'Saved to database' : 'Saving...'}
             </p>
           </div>
         </div>

@@ -104,9 +104,36 @@ export default function PWAInstallHandler() {
     };
 
     // Handle PWA installed
-    const handleAppInstalled = () => {
+    const handleAppInstalled = async () => {
       console.log('🎊 PWA was installed successfully!');
       (window as any).deferredPrompt = null;
+      
+      // Save device token to Supabase when PWA is installed
+      try {
+        const token = await getFCMToken();
+        if (token) {
+          console.log('💾 Saving device token to Supabase after PWA install...');
+          const response = await fetch('/api/pwa-token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              device_token: token,
+              user_agent: navigator.userAgent
+            })
+          });
+          
+          const result = await response.json();
+          if (result.success) {
+            console.log('✅ Device token saved to Supabase:', result.action);
+          } else {
+            console.error('❌ Failed to save device token:', result.error);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error saving device token after PWA install:', error);
+      }
     };
 
     // Add event listeners
