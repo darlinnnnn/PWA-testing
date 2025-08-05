@@ -22,8 +22,19 @@ if (!getApps().length) {
       });
       console.log('✅ Firebase Admin SDK initialized successfully');
     } else {
-      console.log('🔧 No service account found - Firebase Admin SDK not initialized');
-      console.log('⚠️ Please set FIREBASE_SERVICE_ACCOUNT_BASE64 environment variable for production');
+      console.log('🔧 Loading service account from local file...');
+      try {
+        // Try to load from local file (development)
+        const serviceAccount = require('../../../firebase-service-account.json');
+        firebaseApp = initializeApp({
+          credential: cert(serviceAccount),
+        });
+        console.log('✅ Firebase Admin SDK initialized successfully (local)');
+      } catch (fileError) {
+        console.log('🔧 No local service account file found');
+        console.log('⚠️ Please set FIREBASE_SERVICE_ACCOUNT_BASE64 environment variable for production');
+        console.log('⚠️ Or create firebase-service-account.json file in project root');
+      }
     }
   } catch (error) {
     console.error('❌ Firebase Admin initialization failed:', error);
