@@ -57,30 +57,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        <meta name="application-name" content="PWA Notification App" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="PWA App" />
-        <meta name="description" content="A powerful Progressive Web App with Firebase push notifications and Supabase integration" />
-        <meta name="format-detection" content="telephone=no" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="msapplication-config" content="/browserconfig.xml" />
-        <meta name="msapplication-TileColor" content="#667eea" />
-        <meta name="msapplication-tap-highlight" content="no" />
-        <meta name="theme-color" content="#667eea" />
-        
-        {/* Chrome PWA specific meta tags */}
-        <meta name="chrome-webstore-item" content="" />
-        <meta name="google" content="notranslate" />
-        <meta name="robots" content="noindex,nofollow" />
-        <meta name="referrer" content="strict-origin-when-cross-origin" />
-
-        <link rel="apple-touch-icon" href="/icon-192x192.svg" />
-        <link rel="icon" type="image/svg+xml" href="/icon-192x192.svg" />
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="shortcut icon" href="/icon-192x192.svg" />
-        
+      <body className={inter.className}>
         {/* PWA Install Handler */}
         <script
           dangerouslySetInnerHTML={{
@@ -256,8 +233,8 @@ export default function RootLayout({
             `
           }}
         />
-      </head>
-      <body className={inter.className}>{children}</body>
+        {children}
+      </body>
     </html>
   )
 } 
