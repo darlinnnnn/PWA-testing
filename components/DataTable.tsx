@@ -74,6 +74,40 @@ export default function DataTable() {
           console.log('Could not show notification via service worker:', error)
         })
       }
+
+      // Send Firebase push notification
+      if (deviceToken && deviceToken !== 'No token') {
+        try {
+          console.log('🔥 Sending Firebase push notification to:', deviceToken);
+          const response = await fetch('/api/send-notification', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              token: deviceToken,
+              title: '🎉 Data Added Successfully!',
+              body: `New item "${formData.name}" has been added to your PWA!`,
+              data: {
+                source: 'data-table',
+                itemName: formData.name,
+                timestamp: new Date().toISOString()
+              }
+            })
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            console.log('✅ Firebase notification sent successfully:', result.messageId);
+          } else {
+            console.error('❌ Firebase notification failed:', result.error);
+          }
+        } catch (error) {
+          console.error('❌ Error sending Firebase notification:', error);
+        }
+      } else {
+        console.log('⚠️ No device token available for Firebase notification');
+      }
     } catch (error) {
       console.error('Error adding data:', error);
       if (error instanceof Error) {
