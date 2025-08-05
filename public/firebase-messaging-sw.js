@@ -79,8 +79,13 @@ self.addEventListener('notificationclick', function(event) {
         if ((client.url === 'https://pwa-testingssss.vercel.app/' || 
              client.url.startsWith('https://pwa-testingssss.vercel.app/')) && 
             'focus' in client) {
-          console.log('[firebase-messaging-sw.js] Found existing PWA client, focusing:', client.url);
-          return client.focus();
+          console.log('[firebase-messaging-sw.js] Found existing PWA client, attempting to focus:', client.url);
+          try {
+            return client.focus();
+          } catch (error) {
+            console.log('[firebase-messaging-sw.js] Could not focus client (normal security restriction):', error.message);
+            // Continue to next client or open new window
+          }
         }
       }
       
@@ -106,8 +111,13 @@ self.addEventListener('fetch', function(event) {
           // Check if PWA is already open
           for (const client of clientList) {
             if (client.url.includes('pwa-testingssss.vercel.app')) {
-              console.log('[firebase-messaging-sw.js] PWA already open, focusing');
-              client.focus();
+              console.log('[firebase-messaging-sw.js] PWA already open, attempting to focus');
+              try {
+                client.focus();
+                console.log('[firebase-messaging-sw.js] PWA focused successfully');
+              } catch (error) {
+                console.log('[firebase-messaging-sw.js] Could not focus PWA (normal security restriction):', error.message);
+              }
               return new Response('PWA focused', { status: 200 });
             }
           }

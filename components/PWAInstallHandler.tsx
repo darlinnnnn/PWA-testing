@@ -61,18 +61,23 @@ export default function PWAInstallHandler() {
         installButton.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
       };
       
-      // Add click handler to show prompt
+      // Add click handler to show prompt (USER GESTURE REQUIRED)
       installButton.onclick = () => {
         if ((window as any).deferredPrompt) {
-          console.log('🚀 Triggering Chrome native install prompt...');
-          (window as any).deferredPrompt.prompt();
-          (window as any).deferredPrompt.userChoice.then((choiceResult: any) => {
-            console.log('✅ User choice:', choiceResult.outcome);
-            (window as any).deferredPrompt = null;
-            installButton.remove();
-          }).catch((error: any) => {
-            console.error('❌ Error showing prompt:', error);
-          });
+          console.log('🚀 User clicked install button - triggering Chrome native install prompt...');
+          try {
+            (window as any).deferredPrompt.prompt();
+            (window as any).deferredPrompt.userChoice.then((choiceResult: any) => {
+              console.log('✅ User choice:', choiceResult.outcome);
+              (window as any).deferredPrompt = null;
+              installButton.remove();
+            }).catch((error: any) => {
+              console.error('❌ Error showing prompt:', error);
+            });
+          } catch (error) {
+            console.error('❌ Error triggering prompt:', error);
+            alert('📱 To install this app:\n\n1. Tap the menu (⋮) in your browser\n2. Select "Add to Home Screen"\n3. Follow the prompts to install');
+          }
         }
       };
       
