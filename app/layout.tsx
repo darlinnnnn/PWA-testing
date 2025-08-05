@@ -106,21 +106,75 @@ export default function RootLayout({
                 // Store the event for later use
                 window.deferredPrompt = e;
                 
-                // Show prompt automatically after a short delay
-                console.log('📱 Showing PWA install prompt automatically...');
+                // Create and show install button
+                console.log('📱 Creating PWA install button...');
                 
-                setTimeout(() => {
+                const installButton = document.createElement('button');
+                installButton.textContent = '📱 Install App';
+                installButton.style.cssText = `
+                  position: fixed;
+                  top: 20px;
+                  right: 20px;
+                  z-index: 9999;
+                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  color: white;
+                  border: none;
+                  padding: 12px 24px;
+                  border-radius: 25px;
+                  cursor: pointer;
+                  font-size: 14px;
+                  font-weight: 600;
+                  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+                  transition: all 0.3s ease;
+                  animation: pulse 2s infinite;
+                `;
+                
+                // Add hover effect
+                installButton.onmouseenter = () => {
+                  installButton.style.transform = 'scale(1.05)';
+                  installButton.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
+                };
+                
+                installButton.onmouseleave = () => {
+                  installButton.style.transform = 'scale(1)';
+                  installButton.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+                };
+                
+                // Add click handler to show prompt
+                installButton.onclick = () => {
                   if (window.deferredPrompt) {
-                    console.log('🚀 Triggering Chrome native install prompt automatically...');
+                    console.log('🚀 Triggering Chrome native install prompt...');
                     window.deferredPrompt.prompt();
                     window.deferredPrompt.userChoice.then((choiceResult) => {
                       console.log('✅ User choice:', choiceResult.outcome);
                       window.deferredPrompt = null;
+                      installButton.remove();
                     }).catch((error) => {
                       console.error('❌ Error showing prompt:', error);
                     });
                   }
-                }, 2000); // Show prompt after 2 seconds
+                };
+                
+                // Add CSS animation
+                const style = document.createElement('style');
+                style.textContent = `
+                  @keyframes pulse {
+                    0% { box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); }
+                    50% { box-shadow: 0 4px 25px rgba(102, 126, 234, 0.8); }
+                    100% { box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); }
+                  }
+                `;
+                document.head.appendChild(style);
+                
+                document.body.appendChild(installButton);
+                
+                // Auto-hide button after 10 seconds if not clicked
+                setTimeout(() => {
+                  if (installButton.parentNode) {
+                    installButton.style.opacity = '0.7';
+                    installButton.textContent = '📱 Install (Click me!)';
+                  }
+                }, 10000);
               });
 
               // Handle PWA installed
