@@ -118,7 +118,7 @@ self.addEventListener('fetch', function(event) {
               } catch (error) {
                 console.log('[firebase-messaging-sw.js] Could not focus PWA (normal security restriction):', error.message);
               }
-              return new Response('PWA focused', { status: 200 });
+              return new Response('', { status: 200 });
             }
           }
           

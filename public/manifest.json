@@ -26,20 +26,7 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshot-wide.png",
-      "sizes": "1280x720",
-      "form_factor": "wide",
-      "label": "Desktop view of the PWA"
-    },
-    {
-      "src": "/screenshot-mobile.png",
-      "sizes": "390x844",
-      "form_factor": "narrow",
-      "label": "Mobile view of the PWA"
-    }
-  ],
+
   "shortcuts": [
     {
       "name": "Add Data",
